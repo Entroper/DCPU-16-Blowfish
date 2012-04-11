@@ -156,10 +156,10 @@
 	SET C, B
 	AND C, 0xFF00
 	SHR C, 7
+	SET A, [blowfish_S0 + C]
+	SET B, [blowfish_S0 + 1 + C]
 	
 	; + S1
-	SET A, [blowfish_S2 + C]
-	SET B, [blowfish_S2 + 1 + C]
 	SET C, POP
 	ADD A, C
 	ADD B, O
