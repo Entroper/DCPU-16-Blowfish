@@ -41,7 +41,7 @@
 		SET X, Z
 		SET Y, J
 		
-	IFG I, blowfish_feistel + 32
+	IFG blowfish_feistel + 32, I
 		SET PC, encipher_loop
 		
 	; undo last swap
@@ -99,7 +99,7 @@
 		SET X, Z
 		SET Y, J
 		
-	IFG blowfish_feistel, I
+	IFG I, blowfish_feistel
 		SET PC, decipher_loop
 		
 	; undo last swap
