@@ -16,7 +16,50 @@
 ;       L ^= P[17];
 ;       R ^= P[16];
 ;   }
+; Input is L = BA, R = YX
 :blowfish_encipher
+	SET I, blowfish_P
+	
+	:encipher_loop
+		; L ^= P[i]
+		XOR A, [I]
+		ADD I, 1
+		XOR B, [I]
+		ADD I, 1
+		
+		; save L
+		SET Z, A
+		SET J, B
+		
+		; R ^ = F(L)
+		JSR blowfish_feistel
+		XOR X, A
+		XOR Y, B
+
+		; swap
+		SET A, X
+		SET B, Y
+		SET X, Z
+		SET Y, J
+		
+		IFG I, blowfish_feistel + 16
+			SET PC, encipher_loop
+		
+	; undo last swap
+	SET C, A
+	SET A, X
+	SET X, C
+	SET C, B
+	SET B, Y
+	SET Y, C
+	
+	; L ^= P[17], R ^= P[16]
+	XOR A, [I+2]
+	XOR B, [I+3]
+	XOR X, [I]
+	XOR Y, [I+1]
+	
+	SET PC, POP
 	
 ;   private void Decipher(ref uint L, ref uint R)
 ;	{
@@ -33,6 +76,48 @@
 ;		R ^= P[1];
 ;	}
 :blowfish_decipher
+	SET I, blowfish_P + 34
+	
+	:decipher_loop
+		; L ^= P[i]
+		XOR B, [I]
+		SUB I, 1
+		XOR A, [I]
+		SUB I, 1
+		
+		; save L
+		SET Z, A
+		SET J, B
+		
+		; R ^ = F(L)
+		JSR blowfish_feistel
+		XOR X, A
+		XOR Y, B
+
+		; swap
+		SET A, X
+		SET B, Y
+		SET X, Z
+		SET Y, J
+		
+		IFG blowfish_feistel + 4, I
+			SET PC, encipher_loop
+		
+	; undo last swap
+	SET C, A
+	SET A, X
+	SET X, C
+	SET C, B
+	SET B, Y
+	SET Y, C
+	
+	; L ^= P[0], R ^= P[1]
+	XOR A, [I]
+	XOR B, [I+1]
+	XOR X, [I+2]
+	XOR Y, [I+3]
+	
+	SET PC, POP
 
 ; Feistel network function
 ;   private uint F(uint x)
