@@ -1,0 +1,10 @@
+Author: Entroper
+Date: April 10, 2012
+
+This is a library to perform Blowfish encryption on DCPU-16.  The Blowfish
+algorithm is slow to initialize, but fast to encrypt and decrypt compared to
+other algorithms.  2084 words of storage are statically allocated to hold the
+key schedule, which is expanded from the 128-bit key on initialization.
+
+The Blowfish algorithm is a creation of Bruce Schneier, and is described here:
+http://www.schneier.com/blowfish.html
