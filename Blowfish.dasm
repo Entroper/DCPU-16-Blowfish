@@ -131,54 +131,39 @@
 ;   }
 ; Input is BA, output is BA, C is clobbered
 :blowfish_feistel
-	; push S3
-	SET C, A
-	AND C, 0x00FF
-	SHL C, 1
-	SET PUSH, [blowfish_S3 + C]
-	SET PUSH, [blowfish_S3 + 1 + C]
-	
-	; push S2
-	SET C, A
-	AND C, 0xFF00
-	SHR C, 7
-	SET PUSH, [blowfish_S2 + C]
-	SET PUSH, [blowfish_S2 + 1 + C]
-
-	; push S1
-	SET C, B
-	AND C, 0x00FF
-	SHL C, 1
-	SET PUSH, [blowfish_S1 + C]
-	SET PUSH, [blowfish_S1 + 1 + C]
-
+	SET PUSH, A
+	SET PUSH, B
+		
 	; S0
-	SET C, B
+	SET C, PEEK
 	AND C, 0xFF00
 	SHR C, 7
 	SET A, [blowfish_S0 + C]
 	SET B, [blowfish_S0 + 1 + C]
-	
+
 	; + S1
 	SET C, POP
-	ADD A, C
+	AND C, 0x00FF
+	SHL C, 1
+	ADD A, [blowfish_S1 + C]
 	ADD B, O
-	SET C, POP
-	ADD B, C
-	
+	ADD B, [blowfish_S1 + 1 + C]
+
 	; xor S2
-	SET C, POP
-	XOR A, C
-	SET C, POP
-	XOR B, C
-	
+	SET C, PEEK
+	AND C, 0xFF00
+	SHR C, 7
+	XOR A, [blowfish_S2 + C]
+	XOR B, [blowfish_S2 + 1 + C]
+
 	; + S3
 	SET C, POP
-	ADD A, C
+	AND C, 0x00FF
+	SHL C, 1
+	ADD A, [blowfish_S3 + C]
 	ADD B, O
-	SET C, POP
-	ADD B, C
-	
+	ADD B, [blowfish_S3 + 1 + C]
+
 	SET PC, POP
 
 :blowfish_P dat
