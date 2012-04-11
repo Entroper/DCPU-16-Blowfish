@@ -101,7 +101,7 @@
 		SET Y, J
 		
 		IFG blowfish_feistel + 4, I
-			SET PC, encipher_loop
+			SET PC, decipher_loop
 		
 	; undo last swap
 	SET C, A
