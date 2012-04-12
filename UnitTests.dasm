@@ -35,7 +35,12 @@ SET PC, bf_f_test
 		SET B, [I]
 		SET X, [I + 3]
 		SET Y, [I + 2]
+		
+		SET PUSH, I
+		SET PUSH, J
 		JSR bf_encipher
+		SET J, POP
+		SET I, POP
 		
 		IFN A, [J + 1]
 			SET PC, bf_test_fail
@@ -61,7 +66,12 @@ SET PC, bf_f_test
 		SET B, [I]
 		SET X, [I + 3]
 		SET Y, [I + 2]
+		
+		SET PUSH, I
+		SET PUSH, J
 		JSR bf_decipher
+		SET J, POP
+		SET I, POP
 		
 		IFN A, [J + 1]
 			SET PC, bf_test_fail
@@ -75,7 +85,7 @@ SET PC, bf_f_test
 		ADD I, 4
 		ADD J, 4
 		
-	IFG bf_decipher_test_inputs + 208, I
+	IFG bf_encipher_test_outputs + 208, I
 		SET PC, bf_decipher_test_loop
 
 :bf_test_end
