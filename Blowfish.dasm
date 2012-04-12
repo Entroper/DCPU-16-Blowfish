@@ -99,7 +99,7 @@
 		SET X, Z
 		SET Y, J
 		
-	IFG I, bf_P
+	IFG I, bf_P + 2
 		SET PC, bf_decipher_loop
 		
 	; undo last swap
@@ -111,10 +111,10 @@
 	SET Y, C
 	
 	; L ^= P[0], R ^= P[1]
-	XOR A, [I + 1]
-	XOR B, [I]
-	XOR X, [I + 3]
-	XOR Y, [I + 2]
+	XOR A, [I - 1]
+	XOR B, [I - 2]
+	XOR X, [I + 1]
+	XOR Y, [I]
 	
 	SET PC, POP
 
