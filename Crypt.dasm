@@ -1,0 +1,78 @@
+.include "Blowfish.dasm"
+
+; ENCRYPTION
+; Input is A, a pointer to the plaintext, B, the length of the plaintext in
+; 64-bit blocks, and C, a pointer to a 64-bit initialization vector (salt).
+; Plaintext should be padded to a multiple of 64 bits before encrypting.
+; Output overwrites input.  The encryption function performs Cipher Block
+; Chaining (CBC) using the salt.  If you want ECB encryption instead, just
+; loop over your data and call bf_encipher on it.
+:bf_encrypt_cbc
+	SET I, A
+	SET J, A
+	SHL B, 2
+	ADD J, B
+	
+	SET B, [C]
+	SET A, [C + 1]
+	SET Y, [C + 2]
+	SET Z, [C + 3]
+	
+	:bf_encrypt_cbc_loop
+		XOR B, [I]
+		XOR A, [I + 1]
+		XOR Y, [I + 2]
+		XOR X, [I + 3]
+		
+		JSR bf_encipher
+		
+		SET [I], B
+		SET [I + 1], A
+		SET [I + 2], Y
+		SET [I + 3], X
+		
+		ADD I, 4
+		
+	IFG J, I
+		SET PC, bf_encrypt_cbc_loop
+		
+	SET PC, POP
+
+; Decryption works like encryption, but note that the contents of the
+; initialization vector will be destroyed.
+:bf_decrypt_cbc
+	SET I, A
+	SET J, A
+	SHL B, 2
+	ADD J, B
+	
+	:bf_decrypt_cbc_loop
+		SET B, [I]
+		SET A, [I + 1]
+		SET Y, [I + 2]
+		SET X, [I + 3]
+		
+		JSR bf_decipher
+		
+		XOR B, [C]
+		XOR A, [C + 1]
+		XOR Y, [C + 2]
+		XOR X, [C + 3]
+		
+		SET [C], [I]
+		SET [C + 1], [I + 1]
+		SET [C + 2], [I + 2]
+		SET [C + 3], [I + 3]
+		
+		ADD I, 4
+		
+	IFG J, I
+		SET PC, bf_decrypt_cbc_loop
+	
+	SET PC, POP
+
+; These functions will pad and unpad your data to and from a multiple of
+; 64 bits using the standard PKCS#7 padding scheme.
+:bf_pkcs7_pad
+:bf_pkcs7_unpad
+; TODO: Implement
