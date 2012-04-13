@@ -36,11 +36,7 @@ SET PC, bf_f_test
 		SET X, [I + 3]
 		SET Y, [I + 2]
 		
-		SET PUSH, I
-		SET PUSH, J
 		JSR bf_encipher
-		SET J, POP
-		SET I, POP
 		
 		IFN A, [J + 1]
 			SET PC, bf_test_fail
@@ -67,11 +63,7 @@ SET PC, bf_f_test
 		SET X, [I + 3]
 		SET Y, [I + 2]
 		
-		SET PUSH, I
-		SET PUSH, J
 		JSR bf_decipher
-		SET J, POP
-		SET I, POP
 		
 		IFN A, [J + 1]
 			SET PC, bf_test_fail
