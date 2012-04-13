@@ -2,6 +2,49 @@
 ; my C# implementation as a reference.  Some of the original C# code is shown
 ; in comments.
 
+; INITIALIZATION
+; Input is A, a pointer to the key, and B, the length of the key in words.
+; 128-bit keys (8 words) are recommended, but anywhere from 2 to 28 words are
+; acceptable.  Initialization takes approximately as long as encrypting 2084
+; words, the size of the state.  Once initialized, the program cannot be
+; re-initialized with a different key, as the state is statically allocated
+; and overwritten during initialization.
+:bf_initialize
+	; set pointers to the p-array and the end of the key
+	SET I, bf_p
+	SET J, A
+	ADD J, B
+	
+	:bf_expand_key_loop
+		XOR [I], [A]
+		ADD I, 1
+		ADD A, 1
+		IFE A, J ; repeat the key
+			SUB A, B
+	
+	IFG bf_p + 36, I
+		SET PC, bf_expand_key_loop
+	
+	; begin enciphering the state
+	SET A, 0
+	SET B, 0
+	SET X, 0
+	SET Y, 0
+	SET I, bf_p
+	
+	:bf_init_data_loop
+		JSR bf_encipher
+		SET [I], B
+		SET [I + 1], A
+		SET [I + 2], X
+		SET [I + 3], Y
+		ADD I, 4
+		
+	IFG bf_p + 36 + 512 + 512 + 512 + 512 ; blow right through the p-array and s-boxes
+		SET PC, bf_init_data_loop
+	
+	SET PC, POP
+
 ;	private void Encipher(ref uint L, ref uint R)
 ;   {
 ;       for (int i = 0; i < 16; i++)
@@ -18,7 +61,7 @@
 ;   }
 ; Input is L = BA, R = YX
 :bf_encipher
-	SET I, bf_P
+	SET I, bf_p
 	
 	:bf_encipher_loop
 		; L ^= P[i]
@@ -41,7 +84,7 @@
 		SET X, Z
 		SET Y, J
 		
-	IFG bf_P + 32, I
+	IFG bf_p + 32, I
 		SET PC, bf_encipher_loop
 		
 	; undo last swap
@@ -76,7 +119,7 @@
 ;	}
 ; Input is L = BA, R = YX
 :bf_decipher
-	SET I, bf_P + 34
+	SET I, bf_p + 34
 	
 	:bf_decipher_loop
 		; L ^= P[i]
@@ -99,7 +142,7 @@
 		SET X, Z
 		SET Y, J
 		
-	IFG I, bf_P + 2
+	IFG I, bf_p + 2
 		SET PC, bf_decipher_loop
 		
 	; undo last swap
@@ -137,42 +180,42 @@
 	SET C, PEEK
 	AND C, 0xFF00
 	SHR C, 7
-	SET A, [bf_S0 + 1 + C]
-	SET B, [bf_S0 + C]
+	SET A, [bf_s0 + 1 + C]
+	SET B, [bf_s0 + C]
 
 	; + S1
 	SET C, POP
 	AND C, 0x00FF
 	SHL C, 1
-	ADD A, [bf_S1 + 1 + C]
+	ADD A, [bf_s1 + 1 + C]
 	ADD B, O
-	ADD B, [bf_S1 + C]
+	ADD B, [bf_s1 + C]
 
 	; xor S2
 	SET C, PEEK
 	AND C, 0xFF00
 	SHR C, 7
-	XOR A, [bf_S2 + 1 + C]
-	XOR B, [bf_S2 + C]
+	XOR A, [bf_s2 + 1 + C]
+	XOR B, [bf_s2 + C]
 
 	; + S3
 	SET C, POP
 	AND C, 0x00FF
 	SHL C, 1
-	ADD A, [bf_S3 + 1 + C]
+	ADD A, [bf_s3 + 1 + C]
 	ADD B, O
-	ADD B, [bf_S3 + C]
+	ADD B, [bf_s3 + C]
 
 	SET PC, POP
 
-:bf_P
+:bf_p
 dat 0x243F, 0x6A88, 0x85A3, 0x08D3, 0x1319, 0x8A2E, 0x0370, 0x7344
 dat 0xA409, 0x3822, 0x299F, 0x31D0, 0x082E, 0xFA98, 0xEC4E, 0x6C89
 dat 0x4528, 0x21E6, 0x38D0, 0x1377, 0xBE54, 0x66CF, 0x34E9, 0x0C6C
 dat 0xC0AC, 0x29B7, 0xC97C, 0x50DD, 0x3F84, 0xD5B5, 0xB547, 0x0917
 dat 0x9216, 0xD5D9, 0x8979, 0xFB1B
 
-:bf_S0
+:bf_s0
 dat 0xD131, 0x0BA6, 0x98DF, 0xB5AC, 0x2FFD, 0x72DB, 0xD01A, 0xDFB7
 dat 0xB8E1, 0xAFED, 0x6A26, 0x7E96, 0xBA7C, 0x9045, 0xF12C, 0x7F99
 dat 0x24A1, 0x9947, 0xB391, 0x6CF7, 0x0801, 0xF2E2, 0x858E, 0xFC16
@@ -238,7 +281,7 @@ dat 0x08BA, 0x6FB5, 0x571B, 0xE91F, 0xF296, 0xEC6B, 0x2A0D, 0xD915
 dat 0xB663, 0x6521, 0xE7B9, 0xF9B6, 0xFF34, 0x052E, 0xC585, 0x5664
 dat 0x53B0, 0x2D5D, 0xA99F, 0x8FA1, 0x08BA, 0x4799, 0x6E85, 0x076A
 
-:bf_S1
+:bf_s1
 dat 0x4B7A, 0x70E9, 0xB5B3, 0x2944, 0xDB75, 0x092E, 0xC419, 0x2623
 dat 0xAD6E, 0xA6B0, 0x49A7, 0xDF7D, 0x9CEE, 0x60B8, 0x8FED, 0xB266
 dat 0xECAA, 0x8C71, 0x699A, 0x17FF, 0x5664, 0x526C, 0xC2B1, 0x9EE1
@@ -304,7 +347,7 @@ dat 0xDB73, 0xDBD3, 0x1055, 0x88CD, 0x675F, 0xDA79, 0xE367, 0x4340
 dat 0xC5C4, 0x3465, 0x713E, 0x38D8, 0x3D28, 0xF89E, 0xF16D, 0xFF20
 dat 0x153E, 0x21E7, 0x8FB0, 0x3D4A, 0xE6E3, 0x9F2B, 0xDB83, 0xADF7
 
-:bf_S2
+:bf_s2
 dat 0xE93D, 0x5A68, 0x9481, 0x40F7, 0xF64C, 0x261C, 0x9469, 0x2934
 dat 0x4115, 0x20F7, 0x7602, 0xD4F7, 0xBCF4, 0x6B2E, 0xD4A2, 0x0068
 dat 0xD408, 0x2471, 0x3320, 0xF46A, 0x43B7, 0xD4B7, 0x5000, 0x61AF
@@ -370,7 +413,7 @@ dat 0x1E50, 0xEF5E, 0xB161, 0xE6F8, 0xA285, 0x14D9, 0x6C51, 0x133C
 dat 0x6FD5, 0xC7E7, 0x56E1, 0x4EC4, 0x362A, 0xBFCE, 0xDDC6, 0xC837
 dat 0xD79A, 0x3234, 0x9263, 0x8212, 0x670E, 0xFA8E, 0x4060, 0x00E0
 
-:bf_S3
+:bf_s3
 dat 0x3A39, 0xCE37, 0xD3FA, 0xF5CF, 0xABC2, 0x7737, 0x5AC5, 0x2D1B
 dat 0x5CB0, 0x679E, 0x4FA3, 0x3742, 0xD382, 0x2740, 0x99BC, 0x9BBE
 dat 0xD511, 0x8E9D, 0xBF0F, 0x7315, 0xD62D, 0x1C7E, 0xC700, 0xC47B
