@@ -8,6 +8,11 @@
 ; Chaining (CBC) using the salt.  If you want ECB encryption instead, just
 ; loop over your data and call bf_encipher on it.
 :bf_encrypt_cbc
+	SET PUSH, I
+	SET PUSH, J
+	SET PUSH, X
+	SET PUSH, Y
+	
 	SET I, A
 	SET J, A
 	SHL B, 2
@@ -35,12 +40,21 @@
 		
 	IFG J, I
 		SET PC, bf_encrypt_cbc_loop
-		
+	
+	SET Y, POP
+	SET X, POP
+	SET J, POP
+	SET I, POP
 	SET PC, POP
 
 ; Decryption works like encryption, but note that the contents of the
 ; initialization vector will be destroyed.
 :bf_decrypt_cbc
+	SET PUSH, I
+	SET PUSH, J
+	SET PUSH, X
+	SET PUSH, Y
+
 	SET I, A
 	SET J, A
 	SHL B, 2
@@ -69,10 +83,57 @@
 	IFG J, I
 		SET PC, bf_decrypt_cbc_loop
 	
+	SET Y, POP
+	SET X, POP
+	SET J, POP
+	SET I, POP
 	SET PC, POP
 
 ; These functions will pad and unpad your data to and from a multiple of
-; 64 bits using the standard PKCS#7 padding scheme.
-:bf_pkcs7_pad
-:bf_pkcs7_unpad
-; TODO: Implement
+; 64 bits using the standard PKCS#7 padding scheme.  However, it is assumed
+; that your message is formed from whole words rather than packed bytes, so
+; the appended value is the number of padding words added.
+; PKCS#7 padding is described in RFC 5652:
+; http://tools.ietf.org/html/rfc5652#section-6.3
+
+; Input is A, a pointer to the message to be padded, and B, the length of the
+; message in words.  Padding is added to the end of the message, and B is set
+; to the length of the padded message in words.  It is assumed that there is
+; room in memory for up to 4 padding words at the end of the message.
+:bf_pkcs7_word_pad
+	SET PUSH, I 
+	SET PUSH, J
+
+	SET C, B
+	SHR C, 2
+	IFE C, 0
+		SET C, 4
+	
+	SET I, A
+	ADD I, B
+	SET J, I
+	ADD J, C
+	
+	:bf_pkcs7_word_pad_loop
+		SET [I], C
+		ADD I, 1
+	
+	IFG J, I
+		SET PC, bf_pkcs7_word_pad_loop
+		
+	ADD B, C
+	
+	SET J, POP
+	SET I, POP
+	SET PC, POP
+
+; Input is A, a pointer to the padded message, and B, the length of the padded
+; message in words.  The message is left unmodified, and B is set to the
+; length of the original, unpadded message in words.  NOTE: If the message is
+; not properly padded, the results are undefined.
+:bf_pkcs7_word_unpad
+	SET C, A
+	ADD C, B
+	SUB C, 1
+	SET C, [C]
+	SUB B, C
