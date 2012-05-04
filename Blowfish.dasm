@@ -206,8 +206,7 @@
 	AND C, 0x00FF
 	SHL C, 1
 	ADD A, [bf_s1 + 1 + C]
-	ADD B, O
-	ADD B, [bf_s1 + C]
+	ADX B, [bf_s1 + C]
 
 	; xor S2
 	SET C, PEEK
@@ -221,8 +220,7 @@
 	AND C, 0x00FF
 	SHL C, 1
 	ADD A, [bf_s3 + 1 + C]
-	ADD B, O
-	ADD B, [bf_s3 + C]
+	ADX B, [bf_s3 + C]
 
 	SET PC, POP
 
