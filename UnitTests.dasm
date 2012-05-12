@@ -80,6 +80,38 @@ SET PC, bf_f_test
 	IFG bf_encipher_test_outputs + 208, I
 		SET PC, bf_decipher_test_loop
 
+:bf_encrypt_test
+:bf_decrypt_test
+
+; These functions save the internal state to the stack so that you can
+; re-initialize with a different key.  Note you can't just call these from
+; anywhere, because they mess up your stack.
+:bf_push_state
+	SET A, bf_p
+	SET B, POP ; kinda weird, we pop the return address so we can jump later
+	
+	:bf_push_state_loop
+		SET PUSH, [A]
+		ADD A, 1
+	
+	IFG bf_p + 36 + 512 + 512 + 512 + 512, A
+		SET PC, bf_push_state_loop
+	
+	SET PC, B
+
+:bf_pop_state
+	SET A, bf_p + 36 + 512 + 512 + 512 + 512
+	SET B, POP 
+	
+	:bf_pop_state_loop
+		SUB A, 1
+		SET [A], POP
+	
+	IFG A, bf_p
+		SET PC, bf_pop_state_loop
+	
+	SET PC, B
+
 :bf_test_end
 ; TODO: Print something to the screen
 	SET PC, bf_test_end
@@ -299,3 +331,7 @@ dat 0xB806, 0xCF3A, 0x24F0, 0xF768
 dat 0x1F70, 0x9D57, 0xFD37, 0xAE88
 dat 0x3881, 0xC14A, 0xBE33, 0xD350
 dat 0x1F1C, 0xB0B2, 0xD020, 0xD171
+
+:bf_encrypt_test_keys
+:bf_encrypt_test_data
+:bf_encrypt_test_outputs
